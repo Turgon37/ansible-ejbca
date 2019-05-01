@@ -250,8 +250,7 @@ def main():
         )
     except (IOError) as ex:
         module.fail_json(
-            msg="Unable to initialize the soap client because of error: {}".format(str(ex)),
-            exception=ex
+            msg="Unable to initialize the soap client because of error: {}".format(str(ex))
         )
 
     state = module.params['state']
