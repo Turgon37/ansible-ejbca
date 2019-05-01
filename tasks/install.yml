@@ -1,0 +1,56 @@
+---
+
+- name: Install required packages for EJBCA
+  package:
+    name: '{{ ejbca__required_packages_names|list }}'
+    state: present
+
+- name: Get checksums for EJBCA release
+  set_fact:
+    _ejbca__checksum: "{{ (lookup('url', ejbca__checksum_url, wantlist=true)[0]).split(' ')[0] }}"
+
+- name: Download EJBCA release archive to local folder
+  become: false
+  get_url:
+    url: '{{ ejbca__download_url }}'
+    dest: "/tmp/ejbca_ce_{{ ejbca__version|replace('.', '_') }}.zip"
+    checksum: 'sha256:{{ _ejbca__checksum }}'
+  register: _ejbca__download_release
+  until: _ejbca__download_release is succeeded
+  retries: 5
+  delay: 2
+  check_mode: false
+  delegate_to: localhost
+
+- name: Ensure EJBCA releases directory
+  file:
+    path: '{{ ejbca__releases_directory }}'
+    owner: '{{ ejbca__service_user }}'
+    group: '{{ ejbca__service_group }}'
+    state: directory
+    mode: 0750
+
+- name: Unpack EJBCA release
+  unarchive:
+    src: "/tmp/ejbca_ce_{{ ejbca__version|replace('.', '_') }}.zip"
+    # TODO remove
+    remote_src: true
+    dest: '{{ ejbca__releases_directory }}'
+    creates: '{{ ejbca__releases_directory }}/{{ ejbca__release_directory_name }}'
+
+- name: Ensure permission on EJBCA release
+  file:
+    path: '{{ ejbca__releases_directory }}/{{ ejbca__release_directory_name }}'
+    owner: '{{ ejbca__service_user }}'
+    group: '{{ ejbca__service_group }}'
+    mode: 'o=---'
+    recurse: true
+
+- name: Ensure EJBCA link to current version
+  file:
+    path: '{{ ejbca__home }}'
+    src: '{{ ejbca__releases_directory }}/{{ ejbca__release_active_directory_name }}'
+    owner: '{{ ejbca__service_user }}'
+    group: '{{ ejbca__service_group }}'
+    state: link
+    mode: 0750

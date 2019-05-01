@@ -1,0 +1,6 @@
+---
+
+- name: Assert required variables
+  assert:
+    that:
+      - true

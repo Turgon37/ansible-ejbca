@@ -1,0 +1,25 @@
+---
+# tasks file for ansible-ejbca
+
+- name: Include the OS specific variables
+  include_vars: '{{ item }}'
+  with_first_found:
+    - files:
+        - '{{ ansible_distribution }}-{{ ansible_distribution_version }}.yml'
+        - '{{ ansible_distribution }}.yml'
+        - '{{ ansible_os_family }}.yml'
+        - defaults.yml
+      skip: true
+  tags: ['always']
+
+- name: Importing initialization tasks
+  import_tasks: init.yml
+  tags: ['always']
+
+- name: Importing install tasks
+  import_tasks: install.yml
+  tags: ['ejbca', 'ejbca-install']
+
+- name: Import configuration tasks
+  import_tasks: configure.yml
+  tags: ['ejbca', 'ejbca-configure']

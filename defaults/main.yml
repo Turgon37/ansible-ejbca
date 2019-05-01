@@ -1,0 +1,86 @@
+---
+# defaults file for ansible-ejbca
+
+
+### INSTALL CONFIGURATION
+# Choose which version of EJBCA to install
+ejbca__version: 6.10.1.2
+
+# Choose which version currently active (by symlink)
+ejbca__active_version: '{{ ejbca__version }}'
+
+# The EJBCA major version extracted from version above
+ejbca__version_major: "{{ ejbca__version.split('.')[0] }}"
+
+# A abstract version string use with download site
+ejbca__version_path: "{{ ejbca__version_path_map[ejbca__version.split('.')[0:2]|join('.')] }}"
+
+# Map of version path in download site 
+ejbca__version_path_map:
+  '6.10': '6.10.0'
+
+# The templated download URL
+ejbca__download_url: "https://sourceforge.net/projects/ejbca/files/ejbca{{ ejbca__version_major }}/ejbca_{{ ejbca__version_path|replace('.', '_') }}/ejbca_ce_{{ ejbca__version|replace('.', '_') }}.zip"
+
+# The URL from which to retrieve checksums
+ejbca__checksum_url: '{{ ejbca__download_url }}.SHA-256'
+
+# The directory which contains all installed EJBCA releases
+ejbca__releases_directory: /opt/ejbca-releases
+
+# The name of the version release directory
+ejbca__release_directory_name: "ejbca_ce_{{ ejbca__version|replace('.', '_') }}"
+
+# The name of the active version release directory
+ejbca__release_active_directory_name: "ejbca_ce_{{ ejbca__active_version|replace('.', '_') }}"
+
+# The final path where current version of ejbca will be available
+ejbca__home: /opt/ejbca
+
+# List of required package to install
+ejbca__required_packages_names:
+  - unzip
+
+
+### SERVICE CONFIGURATION
+# ---------------------------------------
+# The user and group that jboss will run as
+ejbca__service_user: jboss
+ejbca__service_group: jboss
+
+
+### EJBCA CONFIGURATION
+# ---------------------------------------
+
+ejbca__configuration_directory: '{{ ejbca__home }}/conf'
+
+# Main configuration (to update at least at possible)
+ejbca__configuration_settings_default:
+  custom/customejbca.home: '{{ ejbca__custom_configuration_directory }}'
+
+ejbca__configuration_settings_global: {}
+ejbca__configuration_settings_group: {}
+ejbca__configuration_settings_host: {}
+
+ejbca__configuration_settings: '{{ ejbca__configuration_settings_default
+    |combine(ejbca__configuration_settings_global)
+    |combine(ejbca__configuration_settings_group)
+    |combine(ejbca__configuration_settings_host)
+  }}'
+
+# Custom configuration (to update extensively)
+ejbca__custom_configuration_directory: '{{ ejbca__home }}/../ejbca-custom/conf'
+
+ejbca__custom_configuration_settings_default: {}
+ejbca__custom_configuration_settings_global: {}
+ejbca__custom_configuration_settings_group: {}
+ejbca__custom_configuration_settings_host: {}
+ejbca__custom_configuration_settings: '{{ ejbca__custom_configuration_settings_default
+    |combine(ejbca__custom_configuration_settings_global)
+    |combine(ejbca__custom_configuration_settings_group)
+    |combine(ejbca__custom_configuration_settings_host)
+  }}'
+
+ejbca__merged_configuration_settings: '{{ ejbca__configuration_settings
+    |combine(ejbca__custom_configuration_settings)
+  }}'

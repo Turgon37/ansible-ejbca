@@ -1,0 +1,100 @@
+---
+
+- name: Copy main samples files if properties do not exists
+  copy:
+    src: "{{ ejbca__configuration_directory }}/{{ item.split('/')[0] }}.properties.sample"
+    dest: "{{ ejbca__configuration_directory }}/{{ item.split('/')[0] }}.properties"
+    force: false
+    owner: '{{ ejbca__service_user }}'
+    group: '{{ ejbca__service_group }}'
+    mode: 0740
+    remote_src: true
+  with_items: "
+    {%- set names = [] -%}
+    {%- for k in ejbca__configuration_settings.keys()|sort -%}
+    {%    set _file = k.split('/')[0] %}
+    {%-   if _file not in names -%}
+    {%      set _ = names.append(_file) %}
+    {%-   endif -%}
+    {%- endfor -%}
+    {{ names|sort|unique }}"
+
+- name: Configure EJBCA main conf/ settings
+  ini_file:
+    path: "{{ ejbca__configuration_directory }}/{{ item.key.split('/')[0] }}.properties"
+    owner: '{{ ejbca__service_user }}'
+    group: '{{ ejbca__service_group }}'
+    mode: 0740
+    section: null
+    option: "{{ item.key.split('/')[1] }}"
+    value: '{{ item.value }}'
+    no_extra_spaces: true
+    state: present
+  with_dict: '{{ ejbca__configuration_settings }}'
+
+- name: Ensure custom configuration directory exists
+  file:
+    path: '{{ ejbca__custom_configuration_directory }}'
+    owner: root
+    group: '{{ ejbca__service_group }}'
+    mode: 0750
+    state: directory
+
+- name: Copy custom samples files if properties do not exists
+  copy:
+    src: "{{ ejbca__configuration_directory }}/{{ item.split('/')[0] }}.properties.sample"
+    dest: "{{ ejbca__custom_configuration_directory }}/{{ item.split('/')[0] }}.properties"
+    force: false
+    owner: root
+    group: '{{ ejbca__service_group }}'
+    mode: 0740
+    remote_src: true
+  with_items: "
+    {%- set names = [] -%}
+    {%- for k in ejbca__custom_configuration_settings.keys()|sort -%}
+    {%    set _file = k.split('/')[0] %}
+    {%-   if _file not in names -%}
+    {%      set _ = names.append(_file) %}
+    {%-   endif -%}
+    {%- endfor -%}
+    {{ names|sort|unique }}"
+
+- name: Configure EJBCA custom conf/ settings
+  ini_file:
+    path: "{{ ejbca__custom_configuration_directory }}/{{ item.key.split('/')[0] }}.properties"
+    owner: root
+    group: '{{ ejbca__service_group }}'
+    mode: 0740
+    section: null
+    option: "{{ item.key.split('/')[1] }}"
+    value: '{{ item.value }}'
+    no_extra_spaces: true
+    state: present
+  with_dict: '{{ ejbca__custom_configuration_settings }}'
+
+- name: Configuring datasource
+  include_role:
+    name: turgon37.jboss
+    tasks_from: types/datasource.yml
+  vars:
+    jboss__datasource:
+      name: "{{ ejbca__merged_configuration_settings['database/datasource.jndi-name']|d('EjbcaDS') }}"
+      type: "{{ ejbca__merged_configuration_settings['database/database.name']|d('h2') }}"
+      url: "{{ ejbca__merged_configuration_settings['database/database.url']|d('jdbc:h2:~/ejbcadb;DB_CLOSE_DELAY=-1') }}"
+      driver: "{{ ejbca__merged_configuration_settings['database/database.driver']|d('h2') }}"
+      driver_name: mariadb-java-client-2.3.0.jar
+      username: "{{ ejbca__merged_configuration_settings['database/database.username']|d('sa') }}"
+      password: "{{ ejbca__merged_configuration_settings['database/database.password']|d('sa') }}"
+      extra_attributes:
+        use-ccm: 'true'
+        validate-on-match: 'true'
+        background-validation: 'false'
+        prepared-statements-cache-size: 50 
+        share-prepared-statements: 'true'
+        min-pool-size: 5
+        max-pool-size: 150
+        pool-prefill: 'true'
+        transaction-isolation: TRANSACTION_READ_COMMITTED
+        check-valid-connection-sql: 'SELECT 1;'
+#      state: absent
+  tags: ['ejbca', 'ejbca-configure']
