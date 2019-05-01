@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  role_name: ejbca
+  author: Pierre GINDRAUD
+  description: Install and configure EJBCA
+  license: MIT
+  min_ansible_version: 2.4
+  platforms:
+    - name: Debian
+      versions:
+        - jessie
+        - stretch
+  galaxy_tags:
+    - ejbca
+    - jboss
+
+dependencies: []
