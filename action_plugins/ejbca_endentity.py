@@ -7,8 +7,9 @@ import sys
 # The module_utils path must be added to sys.path in order to import
 # juniper_junos_common. The module_utils path is relative to the path of this
 # file.
-module_utils_path = os.path.normpath(os.path.dirname(__file__) +
-                                     '/../module_utils')
+module_utils_path = os.path.normpath(os.path.join(
+                                       os.path.dirname(os.path.realpath(__file__)),
+                                       '../module_utils'))
 if module_utils_path is not None:
     sys.path.insert(0, module_utils_path)
     import ejbca_common

@@ -26,9 +26,9 @@ class EJBCAActionModule(ActionBase):
 
     def _check_local_file_readability(self, path):
         if not os.path.isfile(path):
-            raise Exception('file {} does not exist'.format(path))
+            raise Exception('file {} does not exist. cwd : {}'.format(path, os.getcwd()))
         if not os.access(path, os.R_OK):
-            raise Exception('file {} is not readable'.format(path))
+            raise Exception('file {} is not readable. cwd : {}'.format(path, os.getcwd()))
 
     def run(self, tmp=None, task_vars=None):
         """"""
